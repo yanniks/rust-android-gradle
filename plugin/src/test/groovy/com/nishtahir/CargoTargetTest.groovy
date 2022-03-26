@@ -39,8 +39,10 @@ class CargoTargetTest extends AbstractTest {
         then:
         buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':dynamic-feature:cargoBuild').outcome == TaskOutcome.SUCCESS
         new File(temporaryFolder.root, "app/build/rustJniLibs/${location}").exists()
         new File(temporaryFolder.root, "library/build/rustJniLibs/${location}").exists()
+        new File(temporaryFolder.root, "dynamic-feature/build/rustJniLibs/${location}").exists()
 
         where:
         [target, location] << [

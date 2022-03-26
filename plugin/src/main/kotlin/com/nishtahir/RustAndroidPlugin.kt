@@ -1,5 +1,8 @@
 package com.nishtahir
 
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.dsl.DynamicFeatureExtension
+import com.android.build.api.dsl.TestedExtension
 import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -7,7 +10,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 const val RUST_TASK_GROUP = "rust"
 
@@ -19,136 +22,166 @@ enum class ToolchainType {
 
 // See https://forge.rust-lang.org/platform-support.html.
 val toolchains = listOf(
-        Toolchain("linux-x86-64",
-                ToolchainType.DESKTOP,
-                "x86_64-unknown-linux-gnu",
-                "<compilerTriple>",
-                "<binutilsTriple>",
-                "desktop/linux-x86-64"),
-        // This should eventually go away: the darwin-x86-64 target will supersede it.
-        // https://github.com/mozilla/rust-android-gradle/issues/77
-        Toolchain("darwin",
-                ToolchainType.DESKTOP,
-                "x86_64-apple-darwin",
-                "<compilerTriple>",
-                "<binutilsTriple>",
-                "desktop/darwin"),
-        Toolchain("darwin-x86-64",
-                ToolchainType.DESKTOP,
-                "x86_64-apple-darwin",
-                "<compilerTriple>",
-                "<binutilsTriple>",
-                "desktop/darwin-x86-64"),
-        Toolchain("darwin-aarch64",
-                ToolchainType.DESKTOP,
-                "aarch64-apple-darwin",
-                "<compilerTriple>",
-                "<binutilsTriple>",
-                "desktop/darwin-aarch64"),
-        Toolchain("win32-x86-64-msvc",
-                ToolchainType.DESKTOP,
-                "x86_64-pc-windows-msvc",
-                "<compilerTriple>",
-                "<binutilsTriple>",
-                "desktop/win32-x86-64"),
-        Toolchain("win32-x86-64-gnu",
-                ToolchainType.DESKTOP,
-                "x86_64-pc-windows-gnu",
-                "<compilerTriple>",
-                "<binutilsTriple>",
-                "desktop/win32-x86-64"),
-        Toolchain("arm",
-                ToolchainType.ANDROID_GENERATED,
-                "armv7-linux-androideabi",
-                "arm-linux-androideabi",
-                "arm-linux-androideabi",
-                "android/armeabi-v7a"),
-        Toolchain("arm64",
-                ToolchainType.ANDROID_GENERATED,
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "android/arm64-v8a"),
-        Toolchain("x86",
-                ToolchainType.ANDROID_GENERATED,
-                "i686-linux-android",
-                "i686-linux-android",
-                "i686-linux-android",
-                "android/x86"),
-        Toolchain("x86_64",
-                ToolchainType.ANDROID_GENERATED,
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "android/x86_64"),
-        Toolchain("arm",
-                ToolchainType.ANDROID_PREBUILT,
-                "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
-                "armv7a-linux-androideabi", // armv7a-linux-androideabi, but the binutils tools are prefixed with
-                "arm-linux-androideabi",    // arm-linux-androideabi. For other architectures, the prefixes are the same
-                "android/armeabi-v7a"),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
-        Toolchain("arm64",
-                ToolchainType.ANDROID_PREBUILT,
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "android/arm64-v8a"),
-        Toolchain("x86",
-                ToolchainType.ANDROID_PREBUILT,
-                "i686-linux-android",
-                "i686-linux-android",
-                "i686-linux-android",
-                "android/x86"),
-        Toolchain("x86_64",
-                ToolchainType.ANDROID_PREBUILT,
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "android/x86_64")
+    Toolchain(
+        "linux-x86-64",
+        ToolchainType.DESKTOP,
+        "x86_64-unknown-linux-gnu",
+        "<compilerTriple>",
+        "<binutilsTriple>",
+        "desktop/linux-x86-64"
+    ),
+    // This should eventually go away: the darwin-x86-64 target will supersede it.
+    // https://github.com/mozilla/rust-android-gradle/issues/77
+    Toolchain(
+        "darwin",
+        ToolchainType.DESKTOP,
+        "x86_64-apple-darwin",
+        "<compilerTriple>",
+        "<binutilsTriple>",
+        "desktop/darwin"
+    ),
+    Toolchain(
+        "darwin-x86-64",
+        ToolchainType.DESKTOP,
+        "x86_64-apple-darwin",
+        "<compilerTriple>",
+        "<binutilsTriple>",
+        "desktop/darwin-x86-64"
+    ),
+    Toolchain(
+        "darwin-aarch64",
+        ToolchainType.DESKTOP,
+        "aarch64-apple-darwin",
+        "<compilerTriple>",
+        "<binutilsTriple>",
+        "desktop/darwin-aarch64"
+    ),
+    Toolchain(
+        "win32-x86-64-msvc",
+        ToolchainType.DESKTOP,
+        "x86_64-pc-windows-msvc",
+        "<compilerTriple>",
+        "<binutilsTriple>",
+        "desktop/win32-x86-64"
+    ),
+    Toolchain(
+        "win32-x86-64-gnu",
+        ToolchainType.DESKTOP,
+        "x86_64-pc-windows-gnu",
+        "<compilerTriple>",
+        "<binutilsTriple>",
+        "desktop/win32-x86-64"
+    ),
+    Toolchain(
+        "arm",
+        ToolchainType.ANDROID_GENERATED,
+        "armv7-linux-androideabi",
+        "arm-linux-androideabi",
+        "arm-linux-androideabi",
+        "android/armeabi-v7a"
+    ),
+    Toolchain(
+        "arm64",
+        ToolchainType.ANDROID_GENERATED,
+        "aarch64-linux-android",
+        "aarch64-linux-android",
+        "aarch64-linux-android",
+        "android/arm64-v8a"
+    ),
+    Toolchain(
+        "x86",
+        ToolchainType.ANDROID_GENERATED,
+        "i686-linux-android",
+        "i686-linux-android",
+        "i686-linux-android",
+        "android/x86"
+    ),
+    Toolchain(
+        "x86_64",
+        ToolchainType.ANDROID_GENERATED,
+        "x86_64-linux-android",
+        "x86_64-linux-android",
+        "x86_64-linux-android",
+        "android/x86_64"
+    ),
+    Toolchain(
+        "arm",
+        ToolchainType.ANDROID_PREBUILT,
+        "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
+        "armv7a-linux-androideabi", // armv7a-linux-androideabi, but the binutils tools are prefixed with
+        "arm-linux-androideabi",    // arm-linux-androideabi. For other architectures, the prefixes are the same
+        "android/armeabi-v7a"
+    ),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
+    Toolchain(
+        "arm64",
+        ToolchainType.ANDROID_PREBUILT,
+        "aarch64-linux-android",
+        "aarch64-linux-android",
+        "aarch64-linux-android",
+        "android/arm64-v8a"
+    ),
+    Toolchain(
+        "x86",
+        ToolchainType.ANDROID_PREBUILT,
+        "i686-linux-android",
+        "i686-linux-android",
+        "i686-linux-android",
+        "android/x86"
+    ),
+    Toolchain(
+        "x86_64",
+        ToolchainType.ANDROID_PREBUILT,
+        "x86_64-linux-android",
+        "x86_64-linux-android",
+        "x86_64-linux-android",
+        "android/x86_64"
+    )
 )
 
-data class Toolchain(val platform: String,
-                     val type: ToolchainType,
-                     val target: String,
-                     val compilerTriple: String,
-                     val binutilsTriple: String,
-                     val folder: String) {
+data class Toolchain(
+    val platform: String,
+    val type: ToolchainType,
+    val target: String,
+    val compilerTriple: String,
+    val binutilsTriple: String,
+    val folder: String
+) {
     fun cc(apiLevel: Int): File =
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang.cmd")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang.cmd")
-                }
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang.cmd")
             } else {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang")
-                }
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang.cmd")
             }
+        } else {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang")
+            } else {
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang")
+            }
+        }
 
     fun cxx(apiLevel: Int): File =
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang++.cmd")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang++.cmd")
-                }
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang++.cmd")
             } else {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang++")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang++")
-                }
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang++.cmd")
             }
+        } else {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang++")
+            } else {
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang++")
+            }
+        }
 
     fun ar(apiLevel: Int): File =
-            if (type == ToolchainType.ANDROID_PREBUILT) {
-                File("bin", "$binutilsTriple-ar")
-            } else {
-                File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
-            }
+        if (type == ToolchainType.ANDROID_PREBUILT) {
+            File("bin", "$binutilsTriple-ar")
+        } else {
+            File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
+        }
 }
 
 @Suppress("unused")
@@ -164,6 +197,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                     when (it) {
                         is AppPlugin -> configurePlugin<AppExtension>(this)
                         is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
+                        is DynamicFeaturePlugin -> configurePlugin<DynamicFeatureExtension>(this)
                     }
                 }
             }
@@ -171,7 +205,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
     }
 
-    private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
+    private inline fun <reified T : TestedExtension> configurePlugin(project: Project) = with(project) {
         cargoExtension.localProperties = Properties()
 
         val localPropertiesFile = File(project.rootDir, "local.properties")
@@ -189,8 +223,8 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         // Allow to set targets, including per-project, in local.properties.
         val localTargets: String? =
-                cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
-                cargoExtension.localProperties.getProperty("rust.targets")
+            cargoExtension.localProperties.getProperty("rust.targets.${project.name}")
+                ?: cargoExtension.localProperties.getProperty("rust.targets")
         if (localTargets != null) {
             cargoExtension.targets = localTargets.split(',').map { it.trim() }
         }
@@ -209,43 +243,57 @@ open class RustAndroidPlugin : Plugin<Project> {
             val default = if (apiLevel != null) {
                 apiLevel
             } else {
-                extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
+                extensions[T::class].let {
+                    ((it as? CommonExtension<*, *, *, *>)?.defaultConfig?.minSdk
+                        ?: (it as? BaseExtension)?.defaultConfig?.minSdkVersion!!.apiLevel)
+                }
             }
             cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
         }
         val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
-            cargoExtension.apiLevels.keys)
+            cargoExtension.apiLevels.keys
+        )
         if (missingApiLevelTargets.size > 0) {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
         extensions[T::class].apply {
+            val sourceSets =
+                ((this as? CommonExtension<*, *, *, *>)?.sourceSets ?: (this as? BaseExtension)?.sourceSets)!!
             sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
             sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
         }
 
         // Determine the NDK version, if present
         val ndkSourceProperties = Properties()
-        val ndkSourcePropertiesFile = File(extensions[T::class].ndkDirectory, "source.properties")
+        val ndkSourcePropertyFileName = "source.properties"
+
+        val ndkSourcePropertiesFile =
+            extensions[T::class].let { it as? CommonExtension<*, *, *, *> }
+                ?.let { File(it.ndkPath, ndkSourcePropertyFileName) }
+                ?: extensions[T::class].let { it as? BaseExtension }!!
+                    .let { File(it.ndkPath, ndkSourcePropertyFileName) }
         if (ndkSourcePropertiesFile.exists()) {
             ndkSourceProperties.load(ndkSourcePropertiesFile.inputStream())
         }
+
         val ndkVersion = ndkSourceProperties.getProperty("Pkg.Revision", "0.0")
         val ndkVersionMajor = ndkVersion.split(".").first().toInt()
 
         // Determine whether to use prebuilt or generated toolchains
         val usePrebuilt =
-            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
-            cargoExtension.prebuiltToolchains ?:
-            (ndkVersionMajor >= 19);
+            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true")
+                ?: cargoExtension.prebuiltToolchains ?: (ndkVersionMajor >= 19);
 
         if (usePrebuilt && ndkVersionMajor < 19) {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
         }
 
         val generateToolchain = if (!usePrebuilt) {
-            tasks.maybeCreate("generateToolchains",
-                    GenerateToolchainsTask::class.java).apply {
+            tasks.maybeCreate(
+                "generateToolchains",
+                GenerateToolchainsTask::class.java
+            ).apply {
                 group = RUST_TASK_GROUP
                 description = "Generate standard toolchain for given architectures"
             }
@@ -254,10 +302,11 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         // Fish linker wrapper scripts from our Java resources.
-        val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
-            group = RUST_TASK_GROUP
-            description = "Generate shared linker wrapper script"
-        }
+        val generateLinkerWrapper =
+            rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
+                group = RUST_TASK_GROUP
+                description = "Generate shared linker wrapper script"
+            }
 
         generateLinkerWrapper.apply {
             // From https://stackoverflow.com/a/320595.
@@ -272,28 +321,36 @@ open class RustAndroidPlugin : Plugin<Project> {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
-        val buildTask = tasks.maybeCreate("cargoBuild",
-                DefaultTask::class.java).apply {
+        val buildTask = tasks.maybeCreate(
+            "cargoBuild",
+            DefaultTask::class.java
+        ).apply {
             group = RUST_TASK_GROUP
             description = "Build library (all targets)"
         }
 
         cargoExtension.targets!!.forEach { target ->
             val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
+                .filter {
+                    if (usePrebuilt) {
+                        it.type != ToolchainType.ANDROID_GENERATED
+                    } else {
+                        it.type != ToolchainType.ANDROID_PREBUILT
                     }
-                    .find { it.platform == target }
+                }
+                .find { it.platform == target }
             if (theToolchain == null) {
-                throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
+                throw GradleException(
+                    "Target ${target} is not recognized (recognized targets: ${
+                        toolchains.map { it.platform }.sorted()
+                    }).  Check `local.properties` and `build.gradle`."
+                )
             }
 
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
-                    CargoBuildTask::class.java).apply {
+            val targetBuildTask = tasks.maybeCreate(
+                "cargoBuild${target.capitalize()}",
+                CargoBuildTask::class.java
+            ).apply {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain

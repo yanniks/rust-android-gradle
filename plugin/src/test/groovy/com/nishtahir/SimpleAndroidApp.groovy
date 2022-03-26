@@ -33,6 +33,10 @@ class SimpleAndroidApp {
         def libPackage = 'org.gradle.android.example.library'
         def libraryActivity = 'LibraryActivity'
 
+        def dynamicFeature = 'dynamic-feature'
+        def dynamicFeaturePackage = 'org.gradle.android.example.dynamicfeature'
+        def dynamicFeatureActivity = 'DynamicFeatureActivity'
+
         file("settings.gradle") << """
                 buildCache {
                     local {
@@ -65,6 +69,13 @@ class SimpleAndroidApp {
                 </manifest>
             """.stripIndent()
 
+        writeActivity(dynamicFeature, dynamicFeaturePackage, dynamicFeatureActivity)
+        file("${dynamicFeature}/src/main/AndroidManifest.xml") << """<?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+                    package="${dynamicFeaturePackage}">
+                </manifest>
+            """.stripIndent()
+
         writeActivity(app, appPackage, appActivity)
         file("${app}/src/main/AndroidManifest.xml") << """<?xml version="1.0" encoding="utf-8"?>
                 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -94,6 +105,7 @@ class SimpleAndroidApp {
         file('settings.gradle') << """
                 include ':${app}'
                 include ':${library}'
+                include ':${dynamicFeature}'
             """.stripIndent()
 
         file("${app}/build.gradle") << subprojectConfiguration("com.android.application") << """
@@ -102,10 +114,12 @@ class SimpleAndroidApp {
             """
                 dependencies {
                     implementation project(':${library}')
+                    implementation project(':${dynamicFeature}')
                 }
             """.stripIndent()
 
         file("${library}/build.gradle") << subprojectConfiguration("com.android.library") << activityDependency()
+        file("${dynamicFeature}/build.gradle") << subprojectConfiguration("com.android.dynamic-feature") << activityDependency()
 
         file("gradle.properties") << """
                 android.useAndroidX=true

@@ -63,5 +63,14 @@ class SimpleCargoProject {
                     libname = "rust"
                 }
             """.stripIndent()
+
+        file('dynamic-feature/build.gradle') << """
+                cargo {
+                    module = "${cargoModule}"
+                    targetDirectory = "${cargoModule}/../target"
+                    targets = [${targetStrings}]
+                    libname = "rust"
+                }
+            """.stripIndent()
     }
 }
